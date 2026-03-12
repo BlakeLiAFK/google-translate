@@ -37,8 +37,17 @@ jobs:
       - name: Install Task
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ver=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build macOS arm64
-        run: task darwin:build ARCH=arm64
+        run: task darwin:build ARCH=arm64 VERSION=${{ steps.version.outputs.ver }}
 
       - name: Package macOS .app
         run: task darwin:create:app:bundle
@@ -79,8 +88,18 @@ jobs:
           echo "$env:USERPROFILE\.local\bin" | Out-File -Append -FilePath $env:GITHUB_PATH
         shell: pwsh
 
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ver=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Windows amd64
-        run: task windows:build
+        run: task windows:build VERSION=${{ steps.version.outputs.ver }}
 
       - name: Create ZIP
         shell: pwsh
@@ -120,8 +139,17 @@ jobs:
       - name: Install Task
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ver=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Linux amd64
-        run: task linux:build
+        run: task linux:build VERSION=${{ steps.version.outputs.ver }}
 
       - name: Compress binary
         run: cd bin && tar czf google-translate-linux-amd64.tar.gz google-translate

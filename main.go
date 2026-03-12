@@ -34,6 +34,21 @@ var assets embed.FS
 //go:embed assets/tray.png
 var trayIconBytes []byte
 
+// 编译时注入的版本信息
+var (
+	version   = "dev"
+	buildTime = ""
+)
+
+// appTitle 生成窗口标题
+func appTitle() string {
+	title := "Google Translate " + version
+	if buildTime != "" {
+		title += " (" + buildTime + ")"
+	}
+	return title
+}
+
 // AppService 桌面应用绑定服务
 type AppService struct {
 	svc       *service.TranslateService
@@ -260,7 +275,7 @@ func main() {
 
 	// 创建主窗口
 	mainWindow := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:  "Google Translate",
+		Title:  appTitle(),
 		Width:  900,
 		Height: 650,
 		Hidden: cfg.Get("start_minimized") == "true",
