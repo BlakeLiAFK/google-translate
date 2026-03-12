@@ -217,7 +217,7 @@ onUnmounted(() => {
 
     <button
       class="btn btn-primary translate-btn"
-      @click="translate"
+      @click="translate(false)"
       :disabled="loading || !sourceText.trim()"
     >
       {{ loading ? 'Translating...' : 'Translate' }}
