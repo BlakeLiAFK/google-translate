@@ -31,9 +31,7 @@ jobs:
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          version: '3.x'
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
       - name: Build macOS arm64
         run: task darwin:build ARCH=arm64
@@ -73,9 +71,11 @@ jobs:
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          version: '3.x'
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/go-task/task/releases/latest/download/task_windows_amd64.zip" -OutFile task.zip
+          Expand-Archive task.zip -DestinationPath "$env:USERPROFILE\.local\bin" -Force
+          echo "$env:USERPROFILE\.local\bin" | Out-File -Append -FilePath $env:GITHUB_PATH
+        shell: pwsh
 
       - name: Build Windows amd64
         run: task windows:build
@@ -116,9 +116,7 @@ jobs:
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
       - name: Install Task
-        uses: arduino/setup-task@v2
-        with:
-          version: '3.x'
+        run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
       - name: Build Linux amd64
         run: task linux:build
