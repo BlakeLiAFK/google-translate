@@ -381,7 +381,20 @@ func main() {
 	})
 
 	tray.SetMenu(trayMenu)
-	tray.AttachWindow(mainWindow).WindowOffset(5)
+
+	// macOS: 托盘图标弹出窗口; Windows/Linux: 点击切换窗口显示
+	if runtime.GOOS == "darwin" {
+		tray.AttachWindow(mainWindow).WindowOffset(5)
+	} else {
+		tray.OnClick(func() {
+			if mainWindow.IsVisible() {
+				mainWindow.Hide()
+			} else {
+				mainWindow.Show()
+				mainWindow.Focus()
+			}
+		})
+	}
 
 	// 根据配置自动启动服务
 	if cfg.Get("http_enabled") == "true" {
