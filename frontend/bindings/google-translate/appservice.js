@@ -17,6 +17,19 @@ import * as history$0 from "./internal/history/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as service$0 from "./internal/service/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as updater$0 from "./internal/updater/models.js";
+
+/**
+ * CheckUpdate 检查是否有新版本
+ * @returns {$CancellablePromise<updater$0.ReleaseInfo | null>}
+ */
+export function CheckUpdate() {
+    return $Call.ByID(3935949939).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
 
 /**
  * ClearCache 清空缓存
@@ -54,6 +67,15 @@ export function DeleteHistory(id) {
 }
 
 /**
+ * DownloadUpdate 下载并安装更新，完成后需重启应用
+ * @param {string} downloadURL
+ * @returns {$CancellablePromise<void>}
+ */
+export function DownloadUpdate(downloadURL) {
+    return $Call.ByID(1964267315, downloadURL);
+}
+
+/**
  * GetCacheStats 获取缓存统计
  * @returns {$CancellablePromise<number>}
  */
@@ -70,7 +92,7 @@ export function GetCacheStats() {
  */
 export function GetHistory(offset, limit, keyword) {
     return $Call.ByID(258093614, offset, limit, keyword).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType4($result);
     }));
 }
 
@@ -89,7 +111,7 @@ export function GetHistoryCount(keyword) {
  */
 export function GetI18nFormats() {
     return $Call.ByID(2135701674).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -99,7 +121,7 @@ export function GetI18nFormats() {
  */
 export function GetLanguages() {
     return $Call.ByID(3294138421).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType7($result);
     }));
 }
 
@@ -109,8 +131,16 @@ export function GetLanguages() {
  */
 export function GetSettings() {
     return $Call.ByID(3018893939).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType8($result);
     }));
+}
+
+/**
+ * GetVersion 获取当前版本号
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetVersion() {
+    return $Call.ByID(2729898890);
 }
 
 /**
@@ -209,7 +239,7 @@ export function ToggleFavorite(id) {
  */
 export function Translate(text, target, source, skipHistory) {
     return $Call.ByID(1964803128, text, target, source, skipHistory).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType10($result);
     }));
 }
 
@@ -223,17 +253,19 @@ export function Translate(text, target, source, skipHistory) {
  */
 export function TranslateI18nContent(content, targetLangs, sourceLang, format) {
     return $Call.ByID(2159285145, content, targetLangs, sourceLang, format).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType8($result);
     }));
 }
 
 // Private type creation functions
-const $$createType0 = history$0.Entry.createFrom;
+const $$createType0 = updater$0.ReleaseInfo.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = $Create.Array($Create.Any);
-const $$createType4 = service$0.Language.createFrom;
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = $Create.Map($Create.Any, $Create.Any);
-const $$createType7 = service$0.TranslateResult.createFrom;
-const $$createType8 = $Create.Nullable($$createType7);
+const $$createType2 = history$0.Entry.createFrom;
+const $$createType3 = $Create.Nullable($$createType2);
+const $$createType4 = $Create.Array($$createType3);
+const $$createType5 = $Create.Array($Create.Any);
+const $$createType6 = service$0.Language.createFrom;
+const $$createType7 = $Create.Array($$createType6);
+const $$createType8 = $Create.Map($Create.Any, $Create.Any);
+const $$createType9 = service$0.TranslateResult.createFrom;
+const $$createType10 = $Create.Nullable($$createType9);

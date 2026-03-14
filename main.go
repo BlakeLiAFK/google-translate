@@ -23,6 +23,7 @@ import (
 	mcpserver "google-translate/internal/mcp"
 	"google-translate/internal/service"
 	"google-translate/internal/tts"
+	"google-translate/internal/updater"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -207,6 +208,23 @@ func (a *AppService) TranslateI18nContent(content string, targetLangs []string, 
 // GetI18nFormats 获取支持的 i18n 格式列表
 func (a *AppService) GetI18nFormats() []string {
 	return i18n.SupportedFormats()
+}
+
+// CheckUpdate 检查是否有新版本
+func (a *AppService) CheckUpdate() (*updater.ReleaseInfo, error) {
+	proxy := a.cfg.Get("proxy_url")
+	return updater.CheckUpdate(version, proxy)
+}
+
+// DownloadUpdate 下载并安装更新，完成后需重启应用
+func (a *AppService) DownloadUpdate(downloadURL string) error {
+	proxy := a.cfg.Get("proxy_url")
+	return updater.DownloadAndReplace(downloadURL, proxy)
+}
+
+// GetVersion 获取当前版本号
+func (a *AppService) GetVersion() string {
+	return version
 }
 
 
@@ -422,6 +440,26 @@ func main() {
 		go func() {
 			appSvc.StartMCPServer()
 			mcpItem.SetLabel("MCP Server: :" + cfg.Get("mcp_port"))
+		}()
+	}
+
+	// 启动时后台自动检查更新
+	if cfg.Get("auto_update") == "true" {
+		go func() {
+			time.Sleep(3 * time.Second)
+			proxy := cfg.Get("proxy_url")
+			info, err := updater.CheckUpdate(version, proxy)
+			if err != nil {
+				slog.Warn("auto update check failed", "error", err)
+				return
+			}
+			if !info.HasUpdate || info.DownloadURL == "" {
+				return
+			}
+			slog.Info("new version available", "version", info.TagName)
+			// 通知前端有新版本
+			data, _ := json.Marshal(info)
+			mainWindow.ExecJS(fmt.Sprintf(`window.dispatchEvent(new CustomEvent('update-available',{detail:%s}))`, data))
 		}()
 	}
 

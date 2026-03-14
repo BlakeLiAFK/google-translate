@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import {
   GetSettings,
   SetSetting,
@@ -12,6 +12,9 @@ import {
   StartMCPServer,
   StopMCPServer,
   SetProxy,
+  CheckUpdate,
+  GetVersion,
+  DownloadUpdate,
 } from '../../bindings/google-translate/appservice.js'
 
 const settings = ref<Record<string, string>>({})
@@ -22,21 +25,29 @@ const loading = ref(true)
 const proxyInput = ref('')
 const proxySaving = ref(false)
 const proxyMsg = ref('')
+const currentVersion = ref('')
+const updateChecking = ref(false)
+const updateInfo = ref<any>(null)
+const updateError = ref('')
+const downloading = ref(false)
+const downloadDone = ref(false)
 
 async function loadSettings() {
   loading.value = true
   try {
-    const [s, count, httpStatus, mcpStatus] = await Promise.all([
+    const [s, count, httpStatus, mcpStatus, ver] = await Promise.all([
       GetSettings(),
       GetCacheStats(),
       IsHTTPAPIRunning(),
       IsMCPServerRunning(),
+      GetVersion(),
     ])
     settings.value = (s || {}) as Record<string, string>
     proxyInput.value = settings.value.proxy_url || ''
     cacheCount.value = count as number
     httpRunning.value = httpStatus as boolean
     mcpRunning.value = mcpStatus as boolean
+    currentVersion.value = ver as string
   } catch (e) {
     console.error('Failed to load settings:', e)
   } finally {
@@ -44,7 +55,21 @@ async function loadSettings() {
   }
 }
 
-onMounted(loadSettings)
+// 监听后台自动检查更新的通知
+function onUpdateAvailable(e: Event) {
+  const info = (e as CustomEvent).detail
+  if (info && info.has_update) {
+    updateInfo.value = info
+  }
+}
+
+onMounted(() => {
+  loadSettings()
+  window.addEventListener('update-available', onUpdateAvailable)
+})
+onUnmounted(() => {
+  window.removeEventListener('update-available', onUpdateAvailable)
+})
 
 async function saveSetting(key: string, value: string) {
   await SetSetting(key, value)
@@ -77,6 +102,34 @@ async function doClearCache() {
   if (!confirm('Clear all translation cache?')) return
   await ClearCache()
   cacheCount.value = 0
+}
+
+async function checkForUpdate() {
+  updateChecking.value = true
+  updateError.value = ''
+  updateInfo.value = null
+  try {
+    const info = await CheckUpdate()
+    updateInfo.value = info
+  } catch (e: any) {
+    updateError.value = e?.message || 'Check failed'
+  } finally {
+    updateChecking.value = false
+  }
+}
+
+async function doDownloadUpdate() {
+  if (!updateInfo.value?.download_url) return
+  downloading.value = true
+  updateError.value = ''
+  try {
+    await DownloadUpdate(updateInfo.value.download_url)
+    downloadDone.value = true
+  } catch (e: any) {
+    updateError.value = e?.message || 'Download failed'
+  } finally {
+    downloading.value = false
+  }
 }
 
 async function saveProxy() {
@@ -220,6 +273,53 @@ async function saveProxy() {
       </div>
 
       <div class="settings-group">
+        <h3 class="group-title">About</h3>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Version</span>
+            <span class="setting-desc">{{ currentVersion || 'dev' }}</span>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-primary" @click="checkForUpdate" :disabled="updateChecking">
+              {{ updateChecking ? 'Checking...' : 'Check Update' }}
+            </button>
+          </div>
+        </div>
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">Auto Check Update</span>
+            <span class="setting-desc">Check for updates on startup</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" :checked="settings.auto_update === 'true'" @change="(e: any) => saveSetting('auto_update', e.target.checked ? 'true' : 'false')" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div v-if="updateInfo" class="update-result">
+          <template v-if="updateInfo.has_update">
+            <div class="update-available">
+              <span class="update-tag">{{ updateInfo.tag_name }}</span>
+              <span class="update-hint">New version available!</span>
+            </div>
+            <div class="update-actions">
+              <button
+                v-if="!downloadDone && updateInfo.download_url"
+                class="btn btn-primary"
+                @click="doDownloadUpdate"
+                :disabled="downloading"
+              >{{ downloading ? 'Downloading...' : 'Download & Install' }}</button>
+              <span v-if="downloadDone" class="update-done">Updated! Restart to apply.</span>
+              <a :href="updateInfo.html_url" target="_blank" class="btn btn-ghost">Release Page</a>
+            </div>
+          </template>
+          <template v-else>
+            <span class="update-latest">Already up to date</span>
+          </template>
+        </div>
+        <div v-if="updateError" class="update-error">{{ updateError }}</div>
+      </div>
+
+      <div class="settings-group">
         <h3 class="group-title">MCP Client Config</h3>
         <div class="config-hint">
           <pre>{{ JSON.stringify({ "mcpServers": { "google-translate": { "url": `http://localhost:${settings.mcp_port || '9701'}/sse` } } }, null, 2) }}</pre>
@@ -255,4 +355,12 @@ async function saveProxy() {
 .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
 .config-hint pre { background: var(--bg-input); padding: 12px; border-radius: var(--radius); font-family: 'SF Mono','Menlo',monospace; font-size: 12px; line-height: 1.5; overflow-x: auto; }
 .loading { text-align: center; color: var(--text-secondary); padding: 40px; }
+.update-result { padding: 10px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.update-available { display: flex; align-items: center; gap: 8px; }
+.update-tag { font-weight: 600; color: var(--accent); font-size: 14px; }
+.update-hint { font-size: 13px; color: var(--success); }
+.update-actions { display: flex; align-items: center; gap: 8px; }
+.update-done { font-size: 13px; color: var(--success); font-weight: 500; }
+.update-latest { font-size: 13px; color: var(--text-secondary); }
+.update-error { font-size: 13px; color: var(--danger); padding: 6px 0; }
 </style>

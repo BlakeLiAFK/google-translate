@@ -28,6 +28,7 @@ func New(db *sql.DB) *Config {
 	c.SetDefault("start_minimized", "false")
 	c.SetDefault("proxy_url", "")
 	c.SetDefault("clipboard_monitor", "false")
+	c.SetDefault("auto_update", "true")
 	return c
 }
 

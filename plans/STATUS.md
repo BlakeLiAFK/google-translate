@@ -6,12 +6,13 @@
 
 | 任务 | 开始时间 | 描述 |
 |------|----------|------|
-| fix-release-ci | 2026-03-12 | 修复 Release CI、Windows systray、ZIP 双层嵌套 |
 
 ## 已完成
 
 | 任务 | 完成时间 |
 |------|----------|
+| auto-update | 2026-03-14 |
+| fix-release-ci | 2026-03-12 |
 | translate-desktop | 2026-03-11 |
 
 ## 待办
