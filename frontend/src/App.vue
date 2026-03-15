@@ -122,6 +122,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 6px;
+  transform: scale(2);
 }
 
 .nav-items {

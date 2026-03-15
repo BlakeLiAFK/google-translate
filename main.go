@@ -352,11 +352,7 @@ func main() {
 
 	// 创建系统托盘
 	tray := app.SystemTray.New()
-	if runtime.GOOS == "darwin" {
-		tray.SetTemplateIcon(trayIconBytes)
-	} else {
-		tray.SetIcon(trayIconBytes)
-	}
+	tray.SetIcon(trayIconBytes)
 
 	// 托盘菜单
 	trayMenu := app.Menu.New()
